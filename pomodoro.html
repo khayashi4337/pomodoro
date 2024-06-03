@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ポモドーロタイマー</title>
+  <style>
+    body {
+      text-align: center;
+      font-family: Arial, sans-serif;
+    }
+    h1 {
+      color: #333;
+    }
+    h2 {
+      color: #666;
+    }
+    #timer, #remaining {
+      font-size: 48px;
+      margin-top: 50px;
+      color: #333;
+      display: none;
+    }
+    button {
+      font-size: 18px;
+      padding: 10px 20px;
+      margin-top: 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    @media screen and (max-width: 600px) {
+      #timer, #remaining {
+        font-size: 36px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>ポモドーロタイマー</h1>
+  <h2>30分ごとの格言</h2>
+  <p id="quote"></p>
+  <div id="timer"></div>
+  <div id="remaining"></div>
+  <button id="startButton" type="button" aria-label="タイマーを開始">タイマー開始</button>
+  <script>
+    let timerStarted = false;
+
+    let isAlerm1Start = false;
+    let isAlerm2Start = false;
+
+    function updateTimer() {
+      if (!timerStarted) return;
+
+      const now = new Date();
+      const minutes = now.getMinutes();
+      const seconds = now.getSeconds();
+
+      const timerElement = document.getElementById('timer');
+
+      const remainingElement = document.getElementById('remaining');
+      if ((minutes >= 25 && minutes <30) || (minutes >= 55 && minutes < 60)) {
+        timerElement.textContent = `${padZero((minutes % 30) - 25)}:${padZero(seconds)} 経過`;
+        const remainingMinutes = 29 - (minutes % 30);
+        const remainingSeconds = 59 - seconds;
+        remainingElement.textContent = `次のアラームまで ${padZero(remainingMinutes)}:${padZero(remainingSeconds)}`;
+
+      } else {
+        timerElement.textContent = `${padZero(minutes % 30)}:${padZero(seconds)} 経過`;
+        const remainingMinutes = 24 - (minutes % 30);
+        const remainingSeconds = 59 - seconds;
+        remainingElement.textContent = `次のアラームまで ${padZero(remainingMinutes)}:${padZero(remainingSeconds)}`;
+      }
+      if ((minutes === 25 || minutes === 55) && seconds === 0) {
+        playAlarm();
+      }
+      if ((minutes === 30 || minutes === 0) && seconds === 0) {
+        playAlarm2();
+      }
+    }
+
+    function padZero(number) {
+      return number.toString().padStart(2, '0');
+    }
+
+    /**
+    * 指定されたオーディオファイルを再生する関数
+    *
+    * @param {string} audioFile - 再生するオーディオファイルのパス
+    * @returns {HTMLAudioElement} - 作成されたオーディオ要素
+    */
+    function playAudio(audioFile) {
+      // 新しいオーディオ要素を作成
+      const audio = new Audio(audioFile);
+
+      // 自動再生を有効にする
+      audio.autoplay = true;
+
+      // 一時的にミュートを設定（自動再生制限の回避）
+      audio.muted = true;
+
+      // オーディオの再生を開始
+      audio.play();
+
+      // ミュートを解除して音声を再生
+      audio.muted = false;
+
+      // 作成したオーディオ要素を返す
+  return audio;
+}
+
+    function playAlarm() {
+      if (!isAlerm1Start) {
+        playStatusReset();
+        isAlerm1Start = true;
+        const audio = playAudio('soft_alarm.mp3');
+        document.body.style.backgroundColor = '#e0ffe0';
+        audio.onended = () => {
+          isAlerm1Start = false;
+        };
+      }
+    }
+
+    function playAlarm2() {
+      if (!isAlerm2Start) {
+        playStatusReset();
+        isAlerm2Start = true;
+        const audio = playAudio('kinkonkankon.mp3');
+        document.body.style.backgroundColor = '#e0e0ff';
+        audio.onended = () => {
+          displayQuote();
+          isAlerm2Start = false;
+        };
+      }
+    }
+
+    function playStatusReset() {
+       isAlerm1Start = false;
+       isAlerm2Start = false;
+    }
+
+    function startTimer() {
+      timerStarted = true;
+      currentQuoteIndex = Math.floor(Math.random() * quotes.length);
+      displayQuote();
+      document.getElementById('startButton').disabled = true;
+      document.getElementById('timer').style.display = 'block';
+      document.getElementById('remaining').style.display = 'block';
+    }
+
+    const quotes = [
+      "「努力する人は希望を語り、怠ける人は不満を語る」 - 井上靖",
+      "「常に始めるのに最適な時期などない。今でなければ、永遠にない」 - ブライアン・トレーシー",
+      "「人生において大切なのは、自分が何をするかではなく、自分が何者になるかである」 - ラルフ・ウォルドー・エマーソン",
+      "「自分の限界を知ることは大切だが、限界を決めるのは自分自身だ」 - アーノルド・シュワルツェネッガー",
+      "「困難の向こうには、必ず新しい世界が待っている」 - ヘレン・ケラー",
+      "「今日の努力は明日の安心につながる」 - ジム・ローン",
+      "「人生の目的は、自分自身を見つけ、自分自身になることである」 - トーマス・モンソン",
+      "「人生において重要なのは、何が起こるかではなく、それにどう反応するかである」 - エピクテトス",
+      "「小さな機会から、しばしば大きな仕事が生まれる」 - デマスティンス",
+      "「自分の夢を信じ、その実現のために勇気を持って行動する人だけが、夢を実現できる」 - ウォルト・ディズニー",
+      "「過去にとらわれるな。今この瞬間に集中せよ」 - ブッダ",
+      "「自分自身を信じる勇気を持つことが、人生で最も大切なことです」 - オプラ・ウィンフリー",
+      "「今日という日は、残りの人生の最初の日である」 - アメリカ先住民の格言",
+      "「人生とは、あなた自身の手でつくりあげていくキャンバスである」 - ダニー・ケイ",
+      "「一番大切なのは、諦めないこと。最後まで勝ち続けることだ」 - ダイアン・ニエミ",
+      "「挑戦することを恐れてはいけない。挑戦しないことを恐れるべきだ」 - ロバート・H・シュラー",
+      "「人生の目的は、自分の情熱を見つけ、それに生きることである」 - オパール・トムリンソン",
+      "「自分の心に従って生きる。それが人生で最も大切なことだ」 - マルカス・アウレリウス",
+      "「偉大な業績は、一日にしてならず」 - 塩野七生",
+      "「今日の積み重ねが、明日の自分を作る」 - ロビン・シャーマ",
+      "「人生の目的は自分の可能性を最大限に発揮することである」 - オリソン・スウィート・マーデン",
+      "「失敗は成功の母。諦めなければ、必ず夢は実現する」 - 野口英世",
+      "「自分の人生に責任を持つ。それが人生を変える第一歩だ」 - スティーブ・マラボリ",
+      "「努力なくして、何も得られるものはない」 - サミュエル・ジョンソン",
+      "「自分の人生を愛す。自分の人生こそ、最高の贈り物だ」 - エマ・ボンビエリ",
+      "「今日を懸命に生きれば、明日はもっと素晴らしいものになる」 - アール・ナイチンゲール",
+      "「人生における全ての偉大な変化は、自分自身を変えることから始まる」 - トニー・ロビンズ",
+      "「今を生きる。それが人生で最も大切なことだ」 - マルクス・アウレリウス",
+      "「信念があれば、不可能を可能にできる」 - ムハンマド・アリ",
+      "「一日は短い人生だ。一日一生を心掛けよう」 - 森信三",
+      "「私たちが何者であるかは、私たちが何をするかで決まる」 - ジョン・ラスキン",
+      "「自分の人生に責任を持つ勇気を持つこと。それが自由への第一歩だ」 - ロバート・フロスト",
+      "「最大の失敗は、何もしないことである」 - ジョージ・イリオット",
+      "「人生とは、自分で意味を見出していくものである」 - アルベール・カミュ",
+      "「今日の小さな努力が、明日の大きな成果を生む」 - ロバート・コリアー",
+      "「自分を信じ、自分の道を進め」 - ラルフ・ワルド・エマーソン",
+      "「人は何歳からでも、新しい人生をスタートすることができる」 - ジョージ・エリオット",
+      "「今この瞬間に集中することが、人生を豊かにする秘訣だ」 - エックハルト・トール",
+      "「5W2Hの他に、メンタルをふくめブロックしている要素も文字にせよ」 - 林 邦行",
+      "「誘惑を後回しにすることで、目標に集中できるようになるよ。」 - 林 邦行",
+      "「まずは、頭のもやもやを文章に書くことから始めよう」 - 林 邦行",
+      "「人生とは自己暗示である。自分を信じ、前進し続けよう」 - 林 邦行",
+      "「小さな成功習慣の積み重ねが、大きな成果を生むよ。エクセルやパワーポイントにアウトライン書くだけでも成功だよ。」 - 林 邦行",
+      "「小さな壁のシミなどの掃除をすると、そのあとで集中力が高まるので仕事運がよくなるよ」 - 林 邦行",
+      "「リハーサルのヒリヒリした感じは、成長のチャンスだ」 - 林 邦行",
+      "「5W2Hのワークシートを作り、問題解決に役立てよう」 - 林 邦行",
+      "「休憩時間はハウスキーピング。心と体を整えよう」 - 林 邦行",      
+      "「作業タスクがなぜできなかったのか、どのような誘惑に負けたのかまずは文章にしてみる。個別の誘惑に勝て」 - 林 邦行",      
+      "「この世は０か１００。１つ着手したら最後の点検・ラッピングまでやりきろう。」 - 林 邦行",      
+      "「達成できない呪いを無効化せよ」 - 林 邦行",      
+      "「手順１・２・３は用意したかな。自分でかんがえてもいいし、googleでしらべてみるのもいいし、AIに聞いてみてもいいよ」 - 林 邦行",      
+      "「成功よりも誘惑にまず勝ちましょう。」 - 林 邦行",      
+      "「メンタルブロックは、もやもやを文章にし、エクセルで手順を作り、調査すると解決しやすさが１００倍になるよ。」 - 林 邦行",      
+      "「良いルーティーンをもてば、問題に集中しやすくなるよ。」 - 林 邦行",      
+      "「締め切り間際が集中力を作るから、締め切りをたくさんもとうね」 - 林 邦行",      
+      "「次のタスクの準備したら、絶好調かもよ」 - 林 邦行",      
+      "「仕事と共存できる娯楽はコーヒーとラジオのような視覚を使わないものがいいよ」 - 林 邦行",      
+      "「なぜなぜ分析で問題解決のヘッドピンを探せば、少ない労力で問題解決するよ」 - 林 邦行",      
+    ];
+    let currentQuoteIndex = 0;
+
+    function displayQuote() {
+      const quoteElement = document.getElementById("quote");
+      quoteElement.textContent = quotes[currentQuoteIndex];
+      currentQuoteIndex = (currentQuoteIndex + 1) % quotes.length;
+    }
+
+    document.getElementById('startButton').addEventListener('click', startTimer);
+
+    setInterval(updateTimer, 1000);
+  </script>
+</body>
+</html>
